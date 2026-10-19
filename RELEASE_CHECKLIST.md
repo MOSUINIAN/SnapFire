@@ -2,7 +2,13 @@
 
 适用版本：`v0.1.0` 测试版（便携 zip）
 
-> 本清单只记录步骤；当前没有执行任何 Git 操作。需要你提供 GitHub 仓库地址/认证后再进行第 4 节。
+> **v0.1.0 测试版已于 2026-10-19 发布。** 以下步骤保留用于后续版本。
+>
+> - 仓库：https://github.com/TJU1895-EFZ/SnapFire
+> - Release：https://github.com/TJU1895-EFZ/SnapFire/releases/tag/v0.1.0
+> - Workflow：[run 39267114421](https://github.com/TJU1895-EFZ/SnapFire/actions/runs/39267114421) — success
+> - CI SHA256：`260d6d78012712ad5d1d9e06d09f1111f676bd6bac7e88dcece29d9271ce30ae`
+> - 下载 Release zip 校验一致；解压后对 CI 构建的 `SnapFire.exe` 完整冒烟通过。
 
 ## 1. 发布前
 

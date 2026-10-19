@@ -191,7 +191,24 @@ npm run dist:win
 5a478f7e8f755b0ba3001d1394369ec82cae443976c221386a1eeb3c61624ba7  SnapFire-0.1.0-win-x64.zip
 ```
 
-> GitHub Actions 会在 tag 构建时重新生成 `SHA256SUMS.txt`；以 Release 中的校验值为准。打包与打包后冒烟已完成，**尚未执行 Git 上传/Release 发布**。
+### 3.6 GitHub Release 发布结果
+
+- 仓库：https://github.com/TJU1895-EFZ/SnapFire
+- Release：https://github.com/TJU1895-EFZ/SnapFire/releases/tag/v0.1.0
+- 标题：**SnapFire v0.1.0 测试版**（预发布 `isPrerelease: true`）
+- Workflow：[run 39267114421](https://github.com/TJU1895-EFZ/SnapFire/actions/runs/39267114421) — **success**
+- 资产：
+  - `SnapFire-0.1.0-win-x64.zip` — 165,552,022 bytes
+  - `SHA256SUMS.txt` — 94 bytes
+- CI 构建 SHA256：
+
+```text
+260d6d78012712ad5d1d9e06d09f1111f676bd6bac7e88dcece29d9271ce30ae  SnapFire-0.1.0-win-x64.zip
+```
+
+- 下载 GitHub Release 的 zip 并校验：与 `SHA256SUMS.txt` **一致**。
+- 解压 Release 资产后，对 CI 构建的 `SnapFire.exe` 再次运行完整双实例冒烟：**SMOKE_OK**，`resultsFlow: 'ok'`；Human 模型从 asar 离线加载成功。
+- 本地构建的 SHA256（`5a478f...`）与 CI 构建不同，属正常现象；以 Release 中的 `SHA256SUMS.txt` 为准。
 
 ---
 

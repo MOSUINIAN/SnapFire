@@ -65,7 +65,7 @@ SnapFire（SnapFire MR 实景枪战）是一个面向真实场地的**混合现�
 
 v0.1.0 测试版以便携 zip 发布：
 
-1. 打开本项目的 **GitHub Releases** 页面。
+1. 打开本项目的 **GitHub Releases** 页面：https://github.com/TJU1895-EFZ/SnapFire/releases
 2. 下载 `SnapFire-0.1.0-win-x64.zip` 和 `SHA256SUMS.txt`。
 3. 解压到任意可写目录（例如 `D:\Games\SnapFire`；不要解压到需要管理员权限的目录）。
 4. 双击 `SnapFire.exe`。
@@ -255,6 +255,7 @@ npx electron .
 - `npm run build` 通过；
 - `npm run test:smoke`：两个 Electron 实例，假摄像头，完整走通大厅 → 战斗 → 开火 → 结算 → 战绩保存 → 返回大厅；
 - 便携 zip 已构建并测试：`release/SnapFire-0.1.0-win-x64.zip`（约 158MB）；打包后的 `SnapFire.exe` 和解压 zip 均通过完整双实例冒烟（Human 模型从 asar 离线加载）；
+- **GitHub Release v0.1.0 测试版已发布**：https://github.com/TJU1895-EFZ/SnapFire/releases/tag/v0.1.0；下载的 Release zip SHA256 校验一致，解压后完整冒烟通过；
 - 真实双机/真人识别、10 米、6 人实机、备份对话框、目标笔记本性能：待按 `TEST_REPORT.md` 第 4 节人工验收。
 
 ---

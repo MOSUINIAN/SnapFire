@@ -29,7 +29,7 @@
 | 备份 / 恢复 | ✅ 已完成 | 自动备份、手动导出/导入、恢复前备份；单元测试通过 |
 | 全局样式 / 响应式 | ✅ 已完成 | 首页/入口/大厅/建档/战斗/结算/设置/战绩；首页/大厅/建档/战斗截图已检查 |
 | 自动化测试 / 验收 | 🟡 进行中 | 29/29 测试通过；双实例 UI 冒烟通过；真实双机/真人识别验收待完成 |
-| README / 交付说明 | ✅ 已完成 | README、TEST_REPORT、Apache-2.0 LICENSE、第三方声明、便携 zip、GitHub Actions 发布流程；GitHub 上传待执行 |
+| README / 交付说明 | ✅ 已完成 | README、TEST_REPORT、Apache-2.0 LICENSE、第三方声明、便携 zip、GitHub Actions；已发布 v0.1.0 测试版 |
 
 ### 0.2 完成定义（DoD）
 
@@ -174,7 +174,7 @@ SnapFire/
 | M8 | 备份/恢复 | M2 | ✅ |
 | M9 | 全局样式与响应式 | M4/M6/M7 | ✅ |
 | M10 | 自动化 + 手工验收 | 全部 | 🟡（自动化与 UI 冒烟通过；真实双机/真人识别待验收） |
-| M11 | README 与交付 | M10 | ✅（本地交付完成；GitHub Release 待上传） |
+| M11 | README 与交付 | M10 | ✅（已发布 v0.1.0 测试版） |
 
 ### 进度更新（2026-10-19）
 
@@ -187,7 +187,7 @@ SnapFire/
 | Phase E 设置/备份 | E1-E6：备份类型、存储备份、IPC、预加载、设置页、损坏提示；存储/备份测试通过 | 备份导出/导入对话框手工验收 |
 | Phase F 视觉样式 | F1-F5：全局/首页/子页/战斗/结算样式；首页、入口、大厅、建档、战斗、结算截图已检查 | 1366×768/全屏尺寸复核 |
 | Phase G 测试 | G1：`typecheck` + `build` 通过；G2/G3：29/29 测试通过；UI 冒烟通过 | G4：双笔记本手工验收；G5：目标硬件性能观察 |
-| Phase H 交付 | `README.md`、`TEST_REPORT.md`、生产构建、应用图标、`start-snapfire.cmd`、Apache-2.0 `LICENSE`、`THIRD_PARTY_NOTICES.md`、第三方许可证、便携 zip、electron-builder 配置、GitHub Actions 发布工作流、Release 说明与检查清单 | 实际 GitHub 上传/Release（需要仓库地址/认证）；真实设备验收签字 |
+| Phase H 交付 | `README.md`、`TEST_REPORT.md`、生产构建、应用图标、`start-snapfire.cmd`、Apache-2.0 `LICENSE`、`THIRD_PARTY_NOTICES.md`、第三方许可证、便携 zip、electron-builder 配置、GitHub Actions 发布工作流、Release 说明与检查清单；**v0.1.0 测试版已发布** | 真实设备验收签字 |
 
 **已执行的验证命令与结果**
 
@@ -206,12 +206,19 @@ SnapFire/
 - **打包后冒烟通过**：对 `release/win-unpacked/SnapFire.exe` 和解压后的 `SnapFire.exe` 分别运行 `scripts/smoke.mjs`，均返回 `SMOKE_OK` / `resultsFlow: 'ok'`；Human 模型从 asar 离线加载成功。
 - 本地 SHA256：`5a478f7e8f755b0ba3001d1394369ec82cae443976c221386a1eeb3c61624ba7`（CI 会重新生成 `SHA256SUMS.txt`）。
 - exe 为 `NotSigned`（v0.1.0 测试版；SmartScreen 提示符合预期）。
-- 已准备 `.github/workflows/release.yml`、`release-notes/v0.1.0.md`、`RELEASE_CHECKLIST.md`；触发方式为推送 tag `v0.1.0`。
-- **未执行任何 Git 操作**；实际 GitHub 仓库上传、tag 推送和 Release 发布待提供仓库地址/认证后执行。
+- `.github/workflows/release.yml`、`release-notes/v0.1.0.md`、`RELEASE_CHECKLIST.md` 已随仓库提交。
+- **GitHub Release 已发布**：
+  - 仓库：https://github.com/TJU1895-EFZ/SnapFire
+  - Release：https://github.com/TJU1895-EFZ/SnapFire/releases/tag/v0.1.0
+  - 标题：SnapFire v0.1.0 测试版（pre-release）
+  - Actions：[run 39267114421](https://github.com/TJU1895-EFZ/SnapFire/actions/runs/39267114421) — success
+  - 资产：`SnapFire-0.1.0-win-x64.zip`（165,552,022 bytes）+ `SHA256SUMS.txt`
+  - CI SHA256：`260d6d78012712ad5d1d9e06d09f1111f676bd6bac7e88dcece29d9271ce30ae`
+  - 下载 Release zip 校验一致；解压后对 CI 构建的 `SnapFire.exe` 完整冒烟通过。
+- 本次发布执行了 Git 初始化、提交、`main` 推送、`v0.1.0` tag 推送（使用已授权的 GitHub CLI 账号）。
 
 > **当前剩余事项**：
-> 1. 实际 GitHub 上传与 Release（需要仓库地址/账号认证；流程已准备）。
-> 2. 真实硬件/真人现场验收（G4/G5：真实双机局域网、真人建档/识别、10 米红线、6 人实机、备份对话框、目标笔记本性能），按 `TEST_REPORT.md` 第 4 节执行。
+> 真实硬件/真人现场验收（G4/G5：真实双机局域网、真人建档/识别、10 米红线、6 人实机、备份对话框、目标笔记本性能），按 `TEST_REPORT.md` 第 4 节执行。
 
 ---
 
