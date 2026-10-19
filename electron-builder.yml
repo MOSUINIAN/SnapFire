@@ -1,0 +1,36 @@
+appId: com.snapfire.mr
+productName: SnapFire
+copyright: Copyright © 2026 SnapFire contributors
+
+directories:
+  output: release
+  buildResources: build
+
+files:
+  - out/**/*
+  - package.json
+  - build/icon.ico
+
+extraFiles:
+  - from: LICENSE
+    to: LICENSE
+  - from: THIRD_PARTY_NOTICES.md
+    to: THIRD_PARTY_NOTICES.md
+  - from: README.md
+    to: README.md
+  - from: third-party-licenses
+    to: third-party-licenses
+
+asar: true
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: zip
+      arch:
+        - x64
+    - target: dir
+      arch:
+        - x64
+  artifactName: SnapFire-${version}-win-${arch}.${ext}
+  signAndEditExecutable: true

@@ -1,0 +1,17 @@
+node_modules/
+out/
+dist/
+release/
+artifacts/
+coverage/
+test-results/
+playwright-report/
+*.log
+*.tmp
+*.bak
+*.corrupt-*
+*.tsbuildinfo
+.env
+.env.*
+.DS_Store
+Thumbs.db

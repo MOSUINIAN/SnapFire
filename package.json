@@ -1,0 +1,41 @@
+{
+  "name": "snapfire",
+  "version": "0.1.0",
+  "description": "SnapFire - offline mixed-reality real-person gunfight for Windows laptops",
+  "main": "./out/main/index.js",
+  "author": "SnapFire",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:smoke": "npm run build && node scripts/smoke.mjs",
+    "dist:win": "npm run build && electron-builder --win --x64 --publish never"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^6.1.2",
+    "@vladmandic/human": "^3.3.6",
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^6.0.0",
+    "playwright-core": "^1.64.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "^0.186.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  }
+}

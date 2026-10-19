@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build renderer/main/preload
+        run: npm run build
+
+      - name: Build portable zip
+        run: npx electron-builder --win --x64 --publish never
+
+      - name: Generate SHA256SUMS
+        shell: pwsh
+        run: |
+          $lines = foreach ($file in Get-ChildItem release/*.zip) {
+            $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($file.Name)"
+          }
+          $lines | Set-Content -Encoding ascii release/SHA256SUMS.txt
+          Get-Content release/SHA256SUMS.txt
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnapFire-portable
+          path: |
+            release/*.zip
+            release/SHA256SUMS.txt
+
+      - name: Create or update GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          NOTES="release-notes/${TAG}.md"
+          if [ -f "$NOTES" ]; then
+            NOTES_ARGS=(--notes-file "$NOTES")
+          else
+            NOTES_ARGS=(--generate-notes)
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" release/*.zip release/SHA256SUMS.txt --clobber
+            gh release edit "$TAG" \
+              --title "SnapFire ${TAG} 测试版" \
+              --prerelease
+            if [ -f "$NOTES" ]; then
+              gh release edit "$TAG" --notes-file "$NOTES"
+            fi
+          else
+            gh release create "$TAG" release/*.zip release/SHA256SUMS.txt \
+              --title "SnapFire ${TAG} 测试版" \
+              --prerelease \
+              "${NOTES_ARGS[@]}"
+          fi
