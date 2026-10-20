@@ -1,35 +1,38 @@
 import { app } from 'electron'
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
-import { randomUUID } from 'node:crypto'
-import {
-  DEFAULT_APP_SETTINGS,
-  type AppSettings,
-  type AppearanceData,
-  type BackupPayload,
-  type HistoryData,
-  type MatchResult,
-  type ProfileData
+import type {
+  AppSettings,
+  AppearanceData,
+  BackupPayload,
+  HistoryData,
+  MatchResult,
+  ProfileData
 } from '../shared/types'
-
-const MAX_HISTORY = 50
+import {
+  MAX_AUTO_BACKUPS,
+  addMatchToHistory,
+  autoBackupFileName,
+  buildBackupPayload,
+  createDefaultProfile,
+  isAppearance,
+  normalizeAppSettings,
+  normalizeHistory,
+  normalizeStoredProfile,
+  sanitizeProfileForSave,
+  sanitizeSettingsForSave,
+  validateBackupPayload
+} from '../core/storageCore'
 
 const PROFILE_FILE = 'profile.json'
 const SETTINGS_FILE = 'settings.json'
 const APPEARANCE_FILE = 'appearance.json'
 const HISTORY_FILE = 'history.json'
 
-function backupStamp(date = new Date()): string {
-  const pad = (value: number): string => String(value).padStart(2, '0')
-  const ms = String(date.getMilliseconds()).padStart(3, '0')
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(
-    date.getHours()
-  )}${pad(date.getMinutes())}${pad(date.getSeconds())}-${ms}`
-}
-
 /**
- * Local-only persistence. Everything lives in Electron's userData directory
- * as small JSON documents so it survives renderer reloads and app restarts.
+ * Electron file IO adapter around the platform-independent storage rules in
+ * src/core/storageCore.ts. Android uses the same rules with its own sandboxed
+ * file adapter.
  */
 export class Storage {
   private readonly dir: string
@@ -105,31 +108,13 @@ export class Storage {
     }
   }
 
-  private makeDefaultProfile(): ProfileData {
-    const id = randomUUID()
-    const now = Date.now()
-    return {
-      id,
-      name: `玩家${id.slice(0, 4).toUpperCase()}`,
-      createdAt: now,
-      updatedAt: now
-    }
-  }
-
   async loadProfile(): Promise<ProfileData> {
     await this.init()
     if (!this.profile) {
       const stored = await this.readJson<Partial<ProfileData>>(PROFILE_FILE)
-      if (stored && typeof stored.id === 'string' && stored.id.length > 0) {
-        const now = Date.now()
-        this.profile = {
-          id: stored.id,
-          name: typeof stored.name === 'string' && stored.name.trim() ? stored.name.trim() : '玩家',
-          createdAt: typeof stored.createdAt === 'number' ? stored.createdAt : now,
-          updatedAt: typeof stored.updatedAt === 'number' ? stored.updatedAt : now
-        }
-      } else {
-        this.profile = this.makeDefaultProfile()
+      const normalized = normalizeStoredProfile(stored)
+      this.profile = normalized ?? createDefaultProfile()
+      if (!normalized) {
         await this.writeJson(PROFILE_FILE, this.profile)
       }
     }
@@ -138,12 +123,7 @@ export class Storage {
 
   async saveProfile(profile: ProfileData): Promise<void> {
     await this.init()
-    const name = profile.name.trim().slice(0, 16) || '玩家'
-    this.profile = {
-      ...profile,
-      name,
-      updatedAt: Date.now()
-    }
+    this.profile = sanitizeProfileForSave(profile)
     await this.writeJson(PROFILE_FILE, this.profile)
   }
 
@@ -151,31 +131,14 @@ export class Storage {
     await this.init()
     if (!this.settings) {
       const stored = await this.readJson<Partial<AppSettings>>(SETTINGS_FILE)
-      this.settings = {
-        volume:
-          typeof stored?.volume === 'number'
-            ? Math.min(1, Math.max(0, stored.volume))
-            : DEFAULT_APP_SETTINGS.volume,
-        detectionQuality:
-          stored?.detectionQuality === 'performance' ||
-          stored?.detectionQuality === 'balanced' ||
-          stored?.detectionQuality === 'accurate'
-            ? stored.detectionQuality
-            : DEFAULT_APP_SETTINGS.detectionQuality,
-        cameraDeviceId:
-          typeof stored?.cameraDeviceId === 'string' ? stored.cameraDeviceId : null,
-        showDebug: Boolean(stored?.showDebug)
-      }
+      this.settings = normalizeAppSettings(stored)
     }
     return this.settings
   }
 
   async saveSettings(settings: AppSettings): Promise<void> {
     await this.init()
-    this.settings = {
-      ...settings,
-      volume: Math.min(1, Math.max(0, settings.volume))
-    }
+    this.settings = sanitizeSettingsForSave(settings)
     await this.writeJson(SETTINGS_FILE, this.settings)
   }
 
@@ -183,19 +146,9 @@ export class Storage {
     await this.init()
     if (this.appearance === undefined) {
       const stored = await this.readJson<AppearanceData>(APPEARANCE_FILE)
-      this.appearance = this.isAppearance(stored) ? stored : null
+      this.appearance = isAppearance(stored) ? stored : null
     }
     return this.appearance
-  }
-
-  private isAppearance(value: unknown): value is AppearanceData {
-    if (!value || typeof value !== 'object') return false
-    const candidate = value as Partial<AppearanceData>
-    return (
-      candidate.version === 1 &&
-      Array.isArray(candidate.faceEmbeddings) &&
-      Array.isArray(candidate.clothing)
-    )
   }
 
   async saveAppearance(appearance: AppearanceData | null): Promise<void> {
@@ -208,18 +161,14 @@ export class Storage {
     await this.init()
     if (!this.history) {
       const stored = await this.readJson<HistoryData>(HISTORY_FILE)
-      this.history =
-        stored && Array.isArray(stored.matches) ? { matches: stored.matches } : { matches: [] }
+      this.history = normalizeHistory(stored)
     }
     return this.history
   }
 
   async addHistory(result: MatchResult): Promise<HistoryData> {
     const history = await this.loadHistory()
-    const filtered = history.matches.filter((match) => match.matchId !== result.matchId)
-    this.history = {
-      matches: [result, ...filtered].slice(0, MAX_HISTORY)
-    }
+    this.history = addMatchToHistory(history, result)
     await this.writeJson(HISTORY_FILE, this.history)
     return this.history
   }
@@ -237,49 +186,11 @@ export class Storage {
       this.loadAppearance(),
       this.loadHistory()
     ])
-    return {
-      formatVersion: 1,
-      createdAt: Date.now(),
-      profile,
-      settings,
-      appearance,
-      history
-    }
+    return buildBackupPayload({ profile, settings, appearance, history })
   }
 
   validateBackup(value: unknown): value is BackupPayload {
-    if (!value || typeof value !== 'object') return false
-    const candidate = value as Partial<BackupPayload>
-    if (candidate.formatVersion !== 1) return false
-    if (typeof candidate.createdAt !== 'number') return false
-    const profile = candidate.profile
-    if (
-      !profile ||
-      typeof profile !== 'object' ||
-      typeof profile.id !== 'string' ||
-      typeof profile.name !== 'string'
-    ) {
-      return false
-    }
-    const settings = candidate.settings
-    if (
-      !settings ||
-      typeof settings !== 'object' ||
-      typeof settings.volume !== 'number' ||
-      (settings.detectionQuality !== 'performance' &&
-        settings.detectionQuality !== 'balanced' &&
-        settings.detectionQuality !== 'accurate')
-    ) {
-      return false
-    }
-    if (candidate.appearance !== null && !this.isAppearance(candidate.appearance)) {
-      return false
-    }
-    const history = candidate.history
-    if (!history || typeof history !== 'object' || !Array.isArray(history.matches)) {
-      return false
-    }
-    return true
+    return validateBackupPayload(value)
   }
 
   async exportBackupTo(filePath: string): Promise<void> {
@@ -311,7 +222,7 @@ export class Storage {
       const payload = await this.createBackup()
       const dir = path.join(this.dir, 'backups')
       await fs.mkdir(dir, { recursive: true })
-      const file = path.join(dir, `snapfire-backup-${backupStamp()}.json`)
+      const file = path.join(dir, autoBackupFileName())
       await fs.writeFile(file, JSON.stringify(payload, null, 2), 'utf8')
       await this.pruneBackups(dir)
       return file
@@ -326,7 +237,7 @@ export class Storage {
       const names = (await fs.readdir(dir))
         .filter((name) => /^snapfire-backup-.*\.json$/.test(name))
         .sort()
-      while (names.length > 10) {
+      while (names.length > MAX_AUTO_BACKUPS) {
         const oldest = names.shift()
         if (oldest) await fs.rm(path.join(dir, oldest), { force: true })
       }
