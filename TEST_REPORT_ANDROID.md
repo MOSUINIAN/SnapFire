@@ -1,8 +1,8 @@
 # SnapFire 安卓版测试报告
 
 - 更新日期：2026-10-20
-- 当前阶段：M1 完成，M0 真机门禁未关闭
-- 依据：`PRD_ANDROID.md` v1.1、`DEV_PLAN_ANDROID.md` v1.2
+- 当前阶段：M1 完成，M2 软件实现进行中，M0 真机门禁未关闭
+- 依据：`PRD_ANDROID.md` v1.1、`DEV_PLAN_ANDROID.md` v1.3
 - 测试原则：失败必须保留，不可通过删除测试、放宽断言或把未执行项写成通过来满足门禁。
 
 ---
@@ -16,6 +16,8 @@
 | 移动 Web 构建 | 通过 |
 | M0 软件可行性 | 通过（仅模拟器） |
 | M0 真机门禁 | **未通过/未执行** |
+| M2 原生网络层 JVM 测试 | 通过（4/4） |
+| M2 调试 APK 构建/安装/启动 | 通过（仅模拟器） |
 | 安卓正式功能验收 | 尚未开始 |
 
 ---
@@ -46,6 +48,9 @@
 | `npm run build` | 通过 | Windows Electron 生产构建 |
 | `npm run build:mobile-web` | 通过 | 生成 `dist-mobile/`，约 15 MB（含模型） |
 | Windows 单实例启动检查 | 通过 | Playwright 启动构建产物，等待 `.home-screen` 成功 |
+| `gradle testDebugUnitTest`（Android） | 通过 | 4 项原生 WebSocket JVM 测试，0 失败 |
+| `gradle assembleDebug`（Android） | 通过 | 生成 21 MB debug APK |
+| 产品 APK 模拟器安装/启动 | 通过 | API 36 模拟器可安装并加载 WebView；未验证真机 |
 
 ### 3.2 测试明细
 
@@ -61,7 +66,26 @@
 | `tests/platform.test.ts` | 平台包装、桌面/浏览器适配器边界 | 3 |
 | **合计** | | **44** |
 
-### 3.3 Windows 单实例启动检查
+### 3.3 Android 原生 JVM 测试
+
+`android/app/src/test/java/com/snapfire/mobile/net/LanWebSocketServerTest.java`
+
+| 测试 | 结果 |
+| --- | --- |
+| 单客户端连接、消息回传、停止后清理 | 通过 |
+| 6 个客户端同时连接与广播 | 通过 |
+| 起始端口被占用时自动回退 | 通过 |
+| 向未知客户端发送消息被拒绝 | 通过 |
+| **合计** | **4/4 通过** |
+
+构建/安装/启动：
+- `gradle assembleDebug` 通过，APK 约 21 MB。
+- API 36 x86_64 模拟器安装成功。
+- 应用启动后 Human 模型成功加载，日志出现 `[vision] Human loaded with WebGL backend` 与 `[vision] warmup complete`。
+- 当前产品 Web 包仍使用浏览器平台适配器，尚未接入原生存储/Android 平台适配器；不能视为 M2 完成。
+- 首页仍是桌面布局，M3 移动端布局尚未开始。
+
+### 3.4 Windows 单实例启动检查
 
 - 使用独立临时 userData 启动 Electron 构建产物。
 - 成功显示 `.home-screen`，页面标题为 `SnapFire`。
@@ -95,6 +119,9 @@
 3. **Android Studio 未安装**：静默安装失败；CLI 构建可用，但 Profiler/IDE 验证待补。
 4. **M0 spike 非正式代码**：无产品级自动化测试，不作为正式功能通过依据。
 5. **Windows 双实例假摄像头冒烟**：当前开发环境存在假摄像头争用，需在正式回归前修复或提供可靠运行条件；不影响本次 44 项自动化测试和单实例启动验证。
+6. **Android 平台适配器仍为浏览器占位**：当前产品 APK 能启动，但本地数据仍走浏览器适配器，原生存储、SAF、二维码等尚未接入；不得据此宣称 M2 完成。
+7. **模拟器启动耗时**：M2 模拟器日志显示模型预热约 30 秒，不能代表真机；需在 M0 真机门禁中测量达标情况。
+8. **桌面布局未移动化**：当前首页是桌面布局，M3 才进行移动端信息架构和触摸适配。
 
 ---
 
