@@ -174,8 +174,7 @@ describe('LanServer match rules', () => {
     expect(protectedShot.hit).toBe(false)
     expect(protectedShot.reason).toBe('invulnerable')
 
-    const internals = server as unknown as { endMatch: () => void }
-    internals.endMatch()
+    server?.endMatchForTest()
     const matchEnd = (await a.waitFor(
       (message) => message.type === 'match-end'
     )) as MatchEndMessage
