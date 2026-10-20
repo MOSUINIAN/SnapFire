@@ -14,6 +14,7 @@ import {
   IconUpload
 } from '../components/Icons'
 import type { ToastTone } from '../types'
+import { platform } from '@platform'
 
 interface SettingsModalProps {
   settings: AppSettings
@@ -53,7 +54,7 @@ export function SettingsModal({
   const exportBackup = async (): Promise<void> => {
     setBusy(true)
     try {
-      const result = await window.snapfire.backup.export()
+      const result = await platform.backup.export()
       if (result.ok) {
         showToast(`备份已导出：${result.path ?? ''}`, 'success')
       } else if (!result.canceled) {
@@ -71,7 +72,7 @@ export function SettingsModal({
     if (!confirmed) return
     setBusy(true)
     try {
-      const result = await window.snapfire.backup.import()
+      const result = await platform.backup.import()
       if (result.ok) {
         await onDataChanged('备份已恢复，本地数据已重新加载')
       } else if (!result.canceled) {
@@ -85,7 +86,7 @@ export function SettingsModal({
   const resetAll = async (): Promise<void> => {
     setBusy(true)
     try {
-      await window.snapfire.storage.resetAll()
+      await platform.storage.resetAll()
       await onDataChanged('本地数据已清除，已重新生成玩家档案')
     } finally {
       setBusy(false)

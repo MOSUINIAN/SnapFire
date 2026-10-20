@@ -20,8 +20,10 @@
   },
   "include": [
     "electron.vite.config.ts",
+    "vite.mobile.config.mts",
     "src/main/**/*.ts",
     "src/preload/**/*.ts",
-    "src/shared/**/*.ts"
+    "src/shared/**/*.ts",
+    "src/core/**/*.ts"
   ]
 }

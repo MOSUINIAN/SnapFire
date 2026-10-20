@@ -24,6 +24,7 @@ import { warmupHuman } from './vision/human'
 import { audio } from './game/audio'
 import type { RoomSession, ToastTone } from './types'
 import { SnapFireMark, IconAlert, IconRefresh } from './components/Icons'
+import { platform } from '@platform'
 
 type Screen = 'home' | 'entry' | 'lobby' | 'battle' | 'results'
 
@@ -88,20 +89,16 @@ export function App(): React.JSX.Element {
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      if (!window.snapfire) {
-        setFatal('未检测到 SnapFire 桌面接口。请通过 Electron 桌面应用启动，而不是直接打开网页。')
-        return
-      }
       try {
         const [nextProfile, nextSettings, nextAppearance, nextHistory, nextAppInfo] =
           await Promise.all([
-            window.snapfire.storage.loadProfile(),
-            window.snapfire.storage.loadSettings(),
-            window.snapfire.storage.loadAppearance(),
-            window.snapfire.storage.loadHistory(),
-            window.snapfire.app.info()
+            platform.storage.loadProfile(),
+            platform.storage.loadSettings(),
+            platform.storage.loadAppearance(),
+            platform.storage.loadHistory(),
+            platform.app.info()
           ])
-        const warnings = await window.snapfire.storage.consumeWarnings()
+        const warnings = await platform.storage.consumeWarnings()
         if (cancelled) return
         setProfile(nextProfile)
         profileRef.current = nextProfile
@@ -152,7 +149,7 @@ export function App(): React.JSX.Element {
     if (stopHost || hostStartedRef.current) {
       hostStartedRef.current = false
       try {
-        await window.snapfire.host.stop()
+        await platform.host.stop()
       } catch {
         // ignore
       }
@@ -244,7 +241,7 @@ export function App(): React.JSX.Element {
           setScreen('results')
           if (!savedMatchesRef.current.has(result.matchId)) {
             savedMatchesRef.current.add(result.matchId)
-            void window.snapfire.storage
+            void platform.storage
               .addHistory(result)
               .then((nextHistory) => {
                 setHistory(nextHistory)
@@ -286,7 +283,7 @@ export function App(): React.JSX.Element {
     setBusy(true)
     setEntryError(null)
     try {
-      const info = await window.snapfire.host.start()
+      const info = await platform.host.start()
       hostStartedRef.current = true
       const address = `${info.lanIps[0] ?? '127.0.0.1'}:${info.port}`
       pendingConnectRef.current = { hostInfo: info, address }
@@ -308,7 +305,7 @@ export function App(): React.JSX.Element {
       if (hostStartedRef.current) {
         hostStartedRef.current = false
         try {
-          await window.snapfire.host.stop()
+          await platform.host.stop()
         } catch {
           // ignore
         }
@@ -374,7 +371,7 @@ export function App(): React.JSX.Element {
       setProfile(next)
       profileRef.current = next
       try {
-        await window.snapfire.storage.saveProfile(next)
+        await platform.storage.saveProfile(next)
       } catch {
         showToast('保存昵称失败', 'error')
       }
@@ -394,7 +391,7 @@ export function App(): React.JSX.Element {
       setSettings(next)
       settingsRef.current = next
       audio.setVolume(next.volume)
-      void window.snapfire.storage.saveSettings(next).catch(() => {
+      void platform.storage.saveSettings(next).catch(() => {
         showToast('保存设置失败', 'error')
       })
     },
@@ -403,7 +400,7 @@ export function App(): React.JSX.Element {
 
   const saveAppearance = useCallback(
     async (next: AppearanceData) => {
-      await window.snapfire.storage.saveAppearance(next)
+      await platform.storage.saveAppearance(next)
       setAppearance(next)
       appearanceRef.current = next
       const live = sessionRef.current
@@ -445,7 +442,7 @@ export function App(): React.JSX.Element {
 
   const clearHistory = useCallback(async () => {
     try {
-      await window.snapfire.storage.clearHistory()
+      await platform.storage.clearHistory()
       setHistory({ matches: [] })
     } catch {
       showToast('清空战绩失败', 'error')
@@ -460,11 +457,11 @@ export function App(): React.JSX.Element {
       }
       const [nextProfile, nextSettings, nextAppearance, nextHistory, nextAppInfo] =
         await Promise.all([
-          window.snapfire.storage.loadProfile(),
-          window.snapfire.storage.loadSettings(),
-          window.snapfire.storage.loadAppearance(),
-          window.snapfire.storage.loadHistory(),
-          window.snapfire.app.info()
+          platform.storage.loadProfile(),
+          platform.storage.loadSettings(),
+          platform.storage.loadAppearance(),
+          platform.storage.loadHistory(),
+          platform.app.info()
         ])
       setProfile(nextProfile)
       profileRef.current = nextProfile
